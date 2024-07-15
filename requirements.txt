@@ -1,5 +1,5 @@
-matplotlib
-numpy
+matplotlib==3.3.4
+numpy<2
 scipy
 NRSur7dq2
 surfinBH
