@@ -5,7 +5,7 @@ python precession_tracking.py --q 2 --chiA 0.2 0.7 -0.1 --chiB 0.2 0.6 0.1
 """
 
 import numpy as np
-import matplotlib.pyplot as P
+import matplotlib.pyplot as plt
 import argparse
 
 from scipy.interpolate import UnivariateSpline
@@ -22,7 +22,6 @@ from matplotlib.patches import FancyArrowPatch
 from matplotlib import cm
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
-P.style.use('seaborn')
 
 import binaryBHexp
 
@@ -199,8 +198,8 @@ def PrecessionTrack(fig, q, chiA, chiB, omega_ref=None, \
             time_tag = 'm%s'%time_tag
         update_lines(np.argmin(np.abs(t-still_time)), *fargs)
         still_fnametag = '%s_%s'%(save_file.split('.')[0], time_tag)
-        P.savefig('%s.png'%still_fnametag, bbox_inches='tight')
-        P.savefig('%s.pdf'%still_fnametag, bbox_inches='tight')
+        plt.savefig('%s.png'%still_fnametag, bbox_inches='tight')
+        plt.savefig('%s.pdf'%still_fnametag, bbox_inches='tight')
         exit()
 
     line_ani = animation.FuncAnimation(fig, update_lines, frames, \
@@ -239,7 +238,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    fig = P.figure(figsize=(5,4))
+    fig = plt.figure(figsize=(5,4))
     line_ani = PrecessionTrack(fig, args.q, args.chiA, args.chiB,
         omega_ref = args.omega_ref,
         draw_full_trajectory = args.draw_full_trajectory,
@@ -286,4 +285,4 @@ if __name__ == '__main__':
         # The waveform does not update when you rotate when paused, so
         # disable pausing if plotting waveform time series
         fig.canvas.mpl_connect('button_press_event', onClick)
-        P.show()
+        plt.show()

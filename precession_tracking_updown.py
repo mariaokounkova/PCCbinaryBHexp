@@ -7,7 +7,7 @@ Where Case_002 contains Horizons.h5.
 """
 
 import numpy as np
-import matplotlib.pyplot as P
+import matplotlib.pyplot as plt
 import argparse
 import h5py
 
@@ -23,7 +23,6 @@ from matplotlib.patches import FancyArrowPatch
 from matplotlib import cm
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
-P.style.use('seaborn')
 
 import binaryBHexp
 
@@ -162,8 +161,8 @@ def PrecessionTrack(fig, RunDir, save_file=None, still_time=None, \
             time_tag = 'm%s'%time_tag
         update_lines(np.argmin(np.abs(t-still_time)), *fargs)
         still_fnametag = '%s_%s'%(save_file.split('.')[0], time_tag)
-        P.savefig('%s.png'%still_fnametag, bbox_inches='tight')
-        P.savefig('%s.pdf'%still_fnametag, bbox_inches='tight')
+        plt.savefig('%s.png'%still_fnametag, bbox_inches='tight')
+        plt.savefig('%s.pdf'%still_fnametag, bbox_inches='tight')
         exit()
 
     line_ani = animation.FuncAnimation(fig, update_lines, frames, \
@@ -186,7 +185,7 @@ if __name__ == '__main__':
         help='If given, saves a plot of the movie at this time and exits.')
 
     args = parser.parse_args()
-    fig = P.figure(figsize=(5,4))
+    fig = plt.figure(figsize=(5,4))
     line_ani = PrecessionTrack(fig, args.RunDir,
         save_file = args.fname,
         still_time = args.still_time)

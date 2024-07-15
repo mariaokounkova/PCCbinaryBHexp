@@ -44,7 +44,7 @@ if os.environ.get('DISPLAY','') == '':
    print('No display found. Using non-interactive Agg backend')
    import matplotlib as mpl
    mpl.use('Agg')
-import matplotlib.pyplot as P
+import matplotlib.pyplot as plt
 import argparse
 
 from scipy.interpolate import UnivariateSpline
@@ -61,7 +61,6 @@ from matplotlib.patches import FancyArrowPatch
 from matplotlib import cm
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
-P.style.use('seaborn')
 
 use_palettable = False
 try:
@@ -1015,8 +1014,8 @@ def BBH_animation(fig, q, chiA, chiB, omega_ref=None, \
             time_tag = 'm%s'%time_tag
         update_lines(np.argmin(np.abs(t-still_time)), *fargs)
         still_fnametag = '%s_%s'%(save_file.split('.')[0], time_tag)
-        P.savefig('%s.png'%still_fnametag, bbox_inches='tight', dpi=300)
-        P.savefig('%s.pdf'%still_fnametag, bbox_inches='tight')
+        plt.savefig('%s.png'%still_fnametag, bbox_inches='tight', dpi=300)
+        plt.savefig('%s.pdf'%still_fnametag, bbox_inches='tight')
         exit()
 
     line_ani = animation.FuncAnimation(fig, update_lines, frames, \
@@ -1126,12 +1125,12 @@ if __name__ == '__main__':
 
 
     if LOW_DEF:
-        fig = P.figure(figsize=(2.3,2))
+        fig = plt.figure(figsize=(2.3,2))
     else:
         if args.no_wave_time_series:
-            fig = P.figure(figsize=(5,4))
+            fig = plt.figure(figsize=(5,4))
         else:
-            fig = P.figure(figsize=(5.1,5.4))
+            fig = plt.figure(figsize=(5.1,5.4))
 
 
     line_ani = BBH_animation(fig, args.q, args.chiA, args.chiB,
@@ -1192,4 +1191,4 @@ if __name__ == '__main__':
         # disable pausing if plotting waveform time series
         if args.no_wave_time_series:
             fig.canvas.mpl_connect('button_press_event', onClick)
-        P.show()
+        plt.show()

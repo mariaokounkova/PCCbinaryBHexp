@@ -3,7 +3,7 @@
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.widgets import Slider, Button
-import matplotlib.pyplot as P
+import matplotlib.pyplot as plt
 import numpy as np
 
 import binaryBHexp
@@ -31,20 +31,20 @@ def run_animation():
     return ani
 
 
-fig = P.figure(figsize=(7,5.5))
+fig = plt.figure(figsize=(7,5.5))
 
 axcolor = 'lightgoldenrodyellow'
 # axes for sliders
-ax_q = P.axes([0.75, 0.8, 0.15, 0.03], facecolor=axcolor)
-ax_chiAmag = P.axes([0.75, 0.75, 0.15, 0.03], facecolor=axcolor)
-ax_chiAth = P.axes([0.75, 0.70, 0.15, 0.03], facecolor=axcolor)
-ax_chiAph = P.axes([0.75, 0.65, 0.15, 0.03], facecolor=axcolor)
-ax_chiBmag = P.axes([0.75, 0.60, 0.15, 0.03], facecolor=axcolor)
-ax_chiBth = P.axes([0.75, 0.55, 0.15, 0.03], facecolor=axcolor)
-ax_chiBph = P.axes([0.75, 0.50, 0.15, 0.03], facecolor=axcolor)
+ax_q = plt.axes([0.75, 0.8, 0.15, 0.03], facecolor=axcolor)
+ax_chiAmag = plt.axes([0.75, 0.75, 0.15, 0.03], facecolor=axcolor)
+ax_chiAth = plt.axes([0.75, 0.70, 0.15, 0.03], facecolor=axcolor)
+ax_chiAph = plt.axes([0.75, 0.65, 0.15, 0.03], facecolor=axcolor)
+ax_chiBmag = plt.axes([0.75, 0.60, 0.15, 0.03], facecolor=axcolor)
+ax_chiBth = plt.axes([0.75, 0.55, 0.15, 0.03], facecolor=axcolor)
+ax_chiBph = plt.axes([0.75, 0.50, 0.15, 0.03], facecolor=axcolor)
 
 # run button
-ax_run = P.axes([0.75, 0.4, 0.1, 0.03])
+ax_run = plt.axes([0.75, 0.4, 0.1, 0.03])
 button = Button(ax_run, 'Run', color=axcolor, hovercolor='0.975')
 
 # define sliders
@@ -65,4 +65,4 @@ def run(event):
     ani = run_animation()
 
 button.on_clicked(run)
-P.show()
+plt.show()
