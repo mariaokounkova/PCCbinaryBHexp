@@ -1,4 +1,4 @@
-matplotlib==3.3.4
+matplotlib
 numpy<2
 scipy
 NRSur7dq2
