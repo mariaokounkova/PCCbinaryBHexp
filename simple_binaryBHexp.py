@@ -22,7 +22,8 @@ from mpl_toolkits.mplot3d import proj3d
 import matplotlib.animation as animation
 from matplotlib import cm
 import matplotlib.colors as colors
-from matplotlib.colors import LogNorm
+from matplotlib.colors import SymLogNorm
+from matplotlib.colors import LinearSegmentedColormap
 
 # number of frames per orbit
 PTS_PER_ORBIT = 30
@@ -31,8 +32,8 @@ PTS_PER_ORBIT = 30
 FREEZE_TIME = -100
 
 colors_dict = {
-        'BhA_traj': 'red',
-        'BhB_traj': 'blue'
+        'BhA_traj': 'white',
+        'BhB_traj': 'white'
         }
 
 zorder_dict = {
@@ -42,6 +43,18 @@ zorder_dict = {
         'traj': 100,
         'Bh': 150,
         }
+
+colors = [
+    (0, "#ff99ff"),    # Pastel pink
+    (0.25, "#4de1ff"), # Light blue
+    (0.5, "black"),    # Black at the midpoint (value zero)
+    (0.75, "#ffcc66"), # Light orange
+    (1, "#ff6666")     # Pastel red
+]
+
+# Create the custom colormap
+gw_cmap = LinearSegmentedColormap.from_list("custom_coolwarm_black", colors)
+
 
 #----------------------------------------------------------------------------
 def quat_between_vecs(u, v):
@@ -387,7 +400,8 @@ class AnimationWrapper:
     def __init__(self, fig, ax, lines, t, dataLines_binary, dataLines_remnant, \
         mA, shape_BhA, chiA_nrsur, \
         mB, shape_BhB, chiB_nrsur, \
-        mf, shape_BhC, BhC_traj, chif):
+        mf, shape_BhC, BhC_traj, chif, 
+        sph_gridZ, gridZ, h_nrsur, max_range):
         self.fig = fig
         self.ax = ax
         self.lines = lines
@@ -407,7 +421,11 @@ class AnimationWrapper:
         self.BhC_traj = BhC_traj
         self.chif = chif
         self.BhC = None
-        self.time_text = ax.text2D(0.8, 0.8, '', transform=ax.transAxes, fontsize=12, zorder=zorder_dict['info_text'])
+        self.sph_gridZ = sph_gridZ
+        self.gridZ = gridZ
+        self.h_nrsur = h_nrsur
+        self.max_range = max_range
+        self.time_text = ax.text2D(0.8, 0.8, '', transform=ax.transAxes, fontsize=12, zorder=zorder_dict['info_text'], color='white')
 
     def update(self, frame):
 
@@ -415,6 +433,23 @@ class AnimationWrapper:
         current_time = self.t[frame]
         self.time_text.set_text(f'$t={current_time:.1f}$')
         print("time: %.1f" % current_time)
+
+        hplusZ = get_waveform_on_grid(self.t, frame-1, self.h_nrsur, self.sph_gridZ)
+        # color range for contourf
+        # Get linthresh from first index. With SymLogNorm, whenever the
+        # value is less than linthresh, the color scale is linear. Else log.
+        linthresh = 0.1 #np.max(np.abs(get_waveform_on_grid(self.t, 0, self.h_nrsur, self.sph_gridZ)))
+        # Get vmax from waveform at peak.  Add in propagation delay
+        zero_idx = np.argmin(np.abs(self.t - self.max_range))
+        vmax = np.max(get_waveform_on_grid(self.t, zero_idx, self.h_nrsur, \
+                                           self.sph_gridZ))
+        # Symmetric about 0
+        vmin = -vmax
+        linthresh = abs(vmax)/100
+        norm = SymLogNorm(linthresh=linthresh, linscale=1, vmin=vmin, vmax=vmax)
+        self.ax.contourf(self.gridZ[0], self.gridZ[1], hplusZ, zdir='z', \
+                offset=-self.max_range, cmap=cm.coolwarm, \
+                zorder=zorder_dict['contourf'], vmin=vmin, vmax=vmax, norm=norm)
 
         ## Plot black holes before merger
         if current_time < 0:
@@ -432,7 +467,7 @@ class AnimationWrapper:
 
             # Draw the black holes
             X, Y, Z = draw_black_hole(self.shape_BhA, self.dataLines_binary[0][:,frame-1], self.chiA_nrsur[frame-1])
-            self.BhA = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.1, zorder=zorder_dict['Bh'])
+            self.BhA = self.ax.plot_surface(X, Y, Z, color='k', linewidth=4, alpha=0.5, zorder=zorder_dict['Bh'])
  
             X, Y, Z = draw_black_hole(self.shape_BhB, self.dataLines_binary[1][:,frame-1], self.chiB_nrsur[frame-1])
             self.BhB = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.1, zorder=zorder_dict['Bh'])
@@ -481,10 +516,13 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     t_binary, chiA_nrsur, chiB_nrsur, L, h_nrsur, BhA_traj, \
          BhB_traj, separation = get_binary_data(q, chiA, chiB, omega_ref, \
          omega_start=omega_start, uniform_time_step_size=uniform_time_step_size)
-    max_range = np.nanmax(np.linalg.norm(BhB_traj, axis=0))
-
+    max_range = 1.1*np.nanmax(np.linalg.norm(BhB_traj, axis=0))
+    print("max_range", max_range)
     mA = q/(1.+q)
     mB = 1./(1.+q)
+
+    sph_gridX, gridX, sph_gridY, gridY, sph_gridZ, gridZ \
+        = get_grids_on_planes(20, max_range)
 
     # evaluate remnant fit
     fit_name = 'surfinBH7dq2'
@@ -507,46 +545,38 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     # Plotting properties
     # Create figure and 3D axis
     fig = plt.figure()
+
+    # Background image
+    background_image = plt.imread('cosmos.png')
+    ax_img = fig.add_axes([0, 0, 1, 1], zorder=-1)  # Full screen
+    ax_img.imshow(background_image, aspect='auto', alpha = 0.9)
+    ax_img.axis('off')  # Hide the 2D axis
+
     ax = fig.add_subplot(111, projection='3d')
 
     properties_fontsize = 10
     properties_text_yloc = 0.8
     freeze_fontsize = 14
     timestep_fontsize = 12
-    label_fontsize = 10
-    ticks_fontsize = 10
-    title_fontsize = 14
-    ticks_pad = 0
-    label_pad = 0
 
     ax.set_xlim3d([-max_range*0.96, max_range*0.96])
     ax.set_ylim3d([-max_range*0.96, max_range*0.96])
     ax.set_zlim3d([-max_range*0.96, max_range*0.96])
 
-    ax.set_xlabel('$x\,(M)$', fontsize=label_fontsize)
-    ax.set_ylabel('$y\,(M)$', fontsize=label_fontsize)
-    ax.set_zlabel('$z\,(M)$', fontsize=label_fontsize)
+    ax.grid(False)  # Remove grid lines
 
-    ax.xaxis.pane.set_edgecolor('black')
-    ax.yaxis.pane.set_edgecolor('black')
-    ax.zaxis.pane.set_edgecolor('black')
+    # Fully remove the panes
+    ax.xaxis.pane.set_visible(False)
+    ax.yaxis.pane.set_visible(False)
+    ax.zaxis.pane.set_visible(False)
 
-    ax.set_facecolor('white')
+    # Optionally remove the pane lines
+    ax.xaxis.pane.set_edgecolor('none')
+    ax.yaxis.pane.set_edgecolor('none')
+    ax.zaxis.pane.set_edgecolor('none')
 
-    ax.xaxis._axinfo['tick']['outward_factor'] = 0
-    ax.yaxis._axinfo['tick']['outward_factor'] = 0
-    ax.zaxis._axinfo['tick']['outward_factor'] = 0
-
-    ax.tick_params(axis='x', which='major', pad=ticks_pad, \
-        labelsize=ticks_fontsize)
-    ax.tick_params(axis='y', which='major', pad=ticks_pad, \
-        labelsize=ticks_fontsize)
-    ax.tick_params(axis='z', which='major', pad=ticks_pad, \
-        labelsize=ticks_fontsize)
-
-    ax.xaxis.labelpad = label_pad
-    ax.yaxis.labelpad = label_pad
-    ax.zaxis.labelpad = label_pad -3
+    # Set the background color of the 3D plot to be transparent
+    ax.patch.set_alpha(0)
 
     # Time parameters
     waveform_end_time = 50 + 2*max_range
@@ -556,7 +586,7 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     # common time array: After waveform_end_time, each step is 100M
     t = np.append(t_binary[t_binary < waveform_end_time], \
         np.arange(waveform_end_time, 500 + waveform_end_time, dt_remnant))
-    frames = range(len(t)) 
+    frames = range(2) #range(len(t))
 
     # assume merger is at origin
     BhC_traj = np.array([tmp*t for tmp in vf])
@@ -579,7 +609,8 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     anim_wrapper = AnimationWrapper(fig, ax, lines, t, dataLines_binary, dataLines_remnant, \
             mA, shape_BhA, chiA_nrsur, \
             mB, shape_BhB, chiB_nrsur, \
-            mf, shape_BhC, BhC_traj, chif)
+            mf, shape_BhC, BhC_traj, chif,
+            sph_gridZ, gridZ, h_nrsur, max_range)
 
     # Create the animation object
     ani = animation.FuncAnimation(fig, anim_wrapper.update, frames=frames, blit=False)
@@ -617,5 +648,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     BBH_animation(args.q, args.chiA, args.chiB, args.save_file)
 
-    plt.show()
+    #plt.show()
 
