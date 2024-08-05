@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+## HELLO!
+
 __doc__ = """binaryBHexp
 ========
 
@@ -968,7 +970,6 @@ def BBH_animation(fig, q, chiA, chiB, omega_ref=None, \
 
     # Will freeze video at this index
     freeze_idx = np.argmin(np.abs(t - FREEZE_TIME))
-
 
     # color range for contourf
     # Get linthresh from first index. With SymLogNorm, whenever the

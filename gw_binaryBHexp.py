@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib.animation as animation
 from matplotlib import cm
-import matplotlib.colors as colors
+import matplotlib.colors as colorsgw_
 from matplotlib.colors import SymLogNorm, Normalize
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -67,7 +67,8 @@ def get_waveform_on_spherical_grid(t_vals, t_idx, h_dict, theta, phi, radius):
     # find the time index that's closest to t_ret = t-r
     t = t_vals[t_idx]
     t_ret_idx = np.argmin(np.abs(t_vals - t + radius))
-    for key in h_dict.keys():
+    for key in [(2, 2)]: #h_dict.keys():
+        print("the key:", key)
         ell, m = key
         ylm = np.vectorize(harmonics.sYlm)(-2, ell, m, theta, phi)
         h += h_dict[key][t_ret_idx]*ylm
@@ -134,11 +135,11 @@ class AnimationWrapper:
         if self.gw is not None:
                  self.gw.remove()
         self.gw = self.ax.plot_surface(self.x, self.y, self.z, \
-            facecolors=cm.jet(norm(h_spherical)), \
+            facecolors=cm.coolwarm(norm(h_spherical)), \
             alpha = 0.2, linewidth=0, antialiased=False)
 
-        print("time: %.1f, max h: %.4f, min h: %.4f, vmax: %.4f, vmin: %.4f" \
-           % (current_time, np.max(h_spherical), np.min(h_spherical), vmax, vmin))
+        print("frame: %d, time: %.1f, max h: %.4f, min h: %.4f, vmax: %.4f, vmin: %.4f" \
+           % (frame, current_time, np.max(h_spherical), np.min(h_spherical), vmax, vmin))
         
         # Plot black holes before merger
         if current_time < 0:
@@ -151,11 +152,11 @@ class AnimationWrapper:
             # Draw the black holes
             X, Y, Z = black_hole_surface(self.shape_BhA, self.BhA_traj[:,frame-1], \
                       self.chiA_nrsur[frame-1])
-            self.BhA = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.5, zorder=1)
+            self.BhA = self.ax.plot_surface(X, Y, Z, color='#2f1170', linewidth=0, alpha=0.5, zorder=1)
  
             X, Y, Z = black_hole_surface(self.shape_BhB, self.BhB_traj[:,frame-1], \
                       self.chiB_nrsur[frame-1])
-            self.BhB = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.5, zorder=1)
+            self.BhB = self.ax.plot_surface(X, Y, Z, color='black', linewidth=0, alpha=0.5, zorder=1)
 
         # Plot black hole after merger
         else: 
@@ -191,12 +192,13 @@ def BBH_animation(q, chiA, chiB, save_file):
     # evaluate remnant fit
     fit = surfinBH.LoadFits('surfinBH7dq2')
 
-    omega_ref=None
+    omega_ref = None
     t_binary, chiA_nrsur, chiB_nrsur, L, h_nrsur, BhA_traj, \
          BhB_traj, separation = get_binary_data(q, chiA, chiB, omega_ref, \
          PTS_PER_ORBIT, FREEZE_TIME, \
          omega_start = None, uniform_time_step_size = None)
 
+    # Outer radius of visualization
     max_range = 1.1*np.nanmax(np.linalg.norm(BhB_traj, axis=0))
     print("max_range", max_range)
 
@@ -207,9 +209,9 @@ def BBH_animation(q, chiA, chiB, save_file):
     # Common time and frames
     t = np.append(t_binary[t_binary < waveform_end_time], \
         np.arange(waveform_end_time, 500 + waveform_end_time, dt_remnant))
-    frames = range(1, 10) #range(len(t))
+    frames = [1, 2, 3] #range(1, 300) #range(len(t))
 
-    # Reemnant properties
+    # Remnant properties
     mf, chif, vf, mf_err, chif_err, vf_err \
          = fit.all(q, chiA, chiB, omega0=omega_ref)
     BhC_traj = np.array([v * t for v in vf])

@@ -22,7 +22,7 @@ from mpl_toolkits.mplot3d import proj3d
 import matplotlib.animation as animation
 from matplotlib import cm
 import matplotlib.colors as colors
-from matplotlib.colors import SymLogNorm
+from matplotlib.colors import SymLogNorm, Normalize
 from matplotlib.colors import LinearSegmentedColormap
 
 # number of frames per orbit
@@ -258,6 +258,35 @@ def get_separation_from_omega(omega, mA, mB, chiA, chiB, LHat, pnorder=3.5):
 
 
 #----------------------------------------------------------------------------
+def get_spherical_grid(radius, num_theta, num_phi):
+    theta = np.linspace(0, 2 * np.pi, num_theta)
+    phi = np.linspace(0, np.pi, num_phi)
+
+    # Create a meshgrid for theta and phi
+    theta, phi = np.meshgrid(theta, phi)
+
+    x = radius * np.sin(phi) * np.cos(theta)
+    y = radius * np.sin(phi) * np.sin(theta)
+    z = radius * np.cos(phi)
+
+    return x, y, z, theta, phi
+
+#----------------------------------------------------------------------------
+def get_waveform_on_spherical_grid(t_vals, t_idx, h_dict, theta, phi, radius):
+    """ Compute absolute value of strain at each r, th, ph value, using
+    the retarded time.
+    """
+    h = np.zeros(theta.shape, dtype=complex)
+    # find the time index that's closest to t_ret = t-r
+    t = t_vals[t_idx]
+    t_ret_idx = np.argmin(np.abs(t_vals - t + radius))
+    for key in h_dict.keys():
+        ell, m = key
+        ylm = np.vectorize(harmonics.sYlm)(-2, ell, m, theta, phi)
+        h += h_dict[key][t_ret_idx]*ylm
+    return np.real(h/radius)
+
+#----------------------------------------------------------------------------
 def get_grids_on_planes(num_pts_1d, max_range):
     # generate grid
     x_1d = np.linspace(-max_range, max_range, num_pts_1d)
@@ -400,7 +429,7 @@ class AnimationWrapper:
     def __init__(self, fig, ax, lines, t, dataLines_binary, dataLines_remnant, \
         mA, shape_BhA, chiA_nrsur, \
         mB, shape_BhB, chiB_nrsur, \
-        mf, shape_BhC, BhC_traj, chif, 
+        mf, shape_BhC, BhC_traj, chif, \
         sph_gridZ, gridZ, h_nrsur, max_range):
         self.fig = fig
         self.ax = ax
@@ -425,6 +454,8 @@ class AnimationWrapper:
         self.gridZ = gridZ
         self.h_nrsur = h_nrsur
         self.max_range = max_range
+        self.x, self.y, self.z, self.theta, self.phi = get_spherical_grid(max_range, 25, 25)
+        self.gw = None
         self.time_text = ax.text2D(0.8, 0.8, '', transform=ax.transAxes, fontsize=12, zorder=zorder_dict['info_text'], color='white')
 
     def update(self, frame):
@@ -432,24 +463,28 @@ class AnimationWrapper:
         # Update the time text
         current_time = self.t[frame]
         self.time_text.set_text(f'$t={current_time:.1f}$')
-        print("time: %.1f" % current_time)
 
-        hplusZ = get_waveform_on_grid(self.t, frame-1, self.h_nrsur, self.sph_gridZ)
-        # color range for contourf
-        # Get linthresh from first index. With SymLogNorm, whenever the
-        # value is less than linthresh, the color scale is linear. Else log.
-        linthresh = 0.1 #np.max(np.abs(get_waveform_on_grid(self.t, 0, self.h_nrsur, self.sph_gridZ)))
-        # Get vmax from waveform at peak.  Add in propagation delay
-        zero_idx = np.argmin(np.abs(self.t - self.max_range))
-        vmax = np.max(get_waveform_on_grid(self.t, zero_idx, self.h_nrsur, \
-                                           self.sph_gridZ))
-        # Symmetric about 0
+        #hplusZ = get_waveform_on_grid(self.t, frame-1, self.h_nrsur, self.sph_gridZ)
+        h_spherical = get_waveform_on_spherical_grid(self.t, frame - 1, \
+                    self.h_nrsur, self.theta, self.phi, self.max_range)
+
+        #linthresh = 0.0001
+        vmax = 0.03
         vmin = -vmax
-        linthresh = abs(vmax)/100
-        norm = SymLogNorm(linthresh=linthresh, linscale=1, vmin=vmin, vmax=vmax)
-        self.ax.contourf(self.gridZ[0], self.gridZ[1], hplusZ, zdir='z', \
-                offset=-self.max_range, cmap=cm.coolwarm, \
-                zorder=zorder_dict['contourf'], vmin=vmin, vmax=vmax, norm=norm)
+        #vmin = -0.03
+        #vmax = 0.03
+        norm = Normalize(vmin=vmin, vmax=vmax)
+
+        print("time: %.1f, max h: %.4f, min h: %.4f, vmax: %.4f, vmin: %.4f" \
+            % (current_time, np.max(h_spherical), np.min(h_spherical), vmax, vmin))
+      
+        # Plot the surface
+        if self.gw is not None:
+                 self.gw.remove()
+
+        self.gw = self.ax.plot_surface(self.x, self.y, self.z, \
+            facecolors=cm.jet(norm(h_spherical)), \
+            alpha = 0.9, linewidth=0, antialiased=False)
 
         ## Plot black holes before merger
         if current_time < 0:
@@ -547,10 +582,10 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     fig = plt.figure()
 
     # Background image
-    background_image = plt.imread('cosmos.png')
-    ax_img = fig.add_axes([0, 0, 1, 1], zorder=-1)  # Full screen
-    ax_img.imshow(background_image, aspect='auto', alpha = 0.9)
-    ax_img.axis('off')  # Hide the 2D axis
+    #background_image = plt.imread('cosmos.png')
+    #ax_img = fig.add_axes([0, 0, 1, 1], zorder=-1)  # Full screen
+    #ax_img.imshow(background_image, aspect='auto', alpha = 0.9)
+    #ax_img.axis('off')  # Hide the 2D axis
 
     ax = fig.add_subplot(111, projection='3d')
 
@@ -578,6 +613,9 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     # Set the background color of the 3D plot to be transparent
     ax.patch.set_alpha(0)
 
+    # Set aspect ratio to be 1:1:1
+    ax.set_box_aspect([1,1,1])
+
     # Time parameters
     waveform_end_time = 50 + 2*max_range
     dt_remnant = 100
@@ -586,7 +624,7 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     # common time array: After waveform_end_time, each step is 100M
     t = np.append(t_binary[t_binary < waveform_end_time], \
         np.arange(waveform_end_time, 500 + waveform_end_time, dt_remnant))
-    frames = range(2) #range(len(t))
+    frames = range(200) #range(len(t))
 
     # assume merger is at origin
     BhC_traj = np.array([tmp*t for tmp in vf])
@@ -609,7 +647,7 @@ def BBH_animation(q, chiA, chiB, save_file, omega_ref=None, \
     anim_wrapper = AnimationWrapper(fig, ax, lines, t, dataLines_binary, dataLines_remnant, \
             mA, shape_BhA, chiA_nrsur, \
             mB, shape_BhB, chiB_nrsur, \
-            mf, shape_BhC, BhC_traj, chif,
+            mf, shape_BhC, BhC_traj, chif, \
             sph_gridZ, gridZ, h_nrsur, max_range)
 
     # Create the animation object
