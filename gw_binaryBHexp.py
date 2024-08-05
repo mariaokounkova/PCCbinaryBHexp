@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# Imports
 import numpy as np
 import os
 if os.environ.get('DISPLAY','') == '':
@@ -12,11 +13,9 @@ from matplotlib.animation import FuncAnimation, FFMpegWriter
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import InterpolatedUnivariateSpline
-
 import surfinBH
 import NRSur7dq2
 from NRSur7dq2 import harmonics
-
 from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib.animation as animation
@@ -33,19 +32,6 @@ PTS_PER_ORBIT = 30
 
 # Time at which to freeze video for 5 seconds
 FREEZE_TIME = -100
-
-colors_dict = {
-        'BhA_traj': 'white',
-        'BhB_traj': 'white'
-        }
-
-zorder_dict = {
-        'contourf': -200,
-        'info_text': 200,
-        'notice_text': 100,
-        'traj': 100,
-        'Bh': 150,
-        }
 
 colors = [
     (0, "#ff99ff"),    # Pastel pink
@@ -129,7 +115,7 @@ class AnimationWrapper:
 
         # Time visualization
         self.time_text = ax.text2D(0.8, 0.8, '', transform=ax.transAxes, \
-            fontsize=12, zorder=zorder_dict['info_text'], color='white')
+            fontsize=12, zorder=2, color='gray')
 
     def update(self, frame):
 
@@ -140,8 +126,6 @@ class AnimationWrapper:
         #linthresh = 0.0001
         vmax = 0.03
         vmin = -vmax
-        #vmin = -0.03
-        #vmax = 0.03
         norm = Normalize(vmin=vmin, vmax=vmax)
 
         # Plot gravitiational wave
@@ -167,11 +151,11 @@ class AnimationWrapper:
             # Draw the black holes
             X, Y, Z = black_hole_surface(self.shape_BhA, self.BhA_traj[:,frame-1], \
                       self.chiA_nrsur[frame-1])
-            self.BhA = self.ax.plot_surface(X, Y, Z, color='k', linewidth=4, alpha=0.5, zorder=zorder_dict['Bh'])
+            self.BhA = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.5, zorder=1)
  
             X, Y, Z = black_hole_surface(self.shape_BhB, self.BhB_traj[:,frame-1], \
                       self.chiB_nrsur[frame-1])
-            self.BhB = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.1, zorder=zorder_dict['Bh'])
+            self.BhB = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.5, zorder=1)
 
         # Plot black hole after merger
         else: 
@@ -189,7 +173,7 @@ class AnimationWrapper:
 
             # Draw the black hole
             X, Y, Z = black_hole_surface(self.shape_BhC, self.BhC_traj[:,frame-1], self.chif)
-            self.BhC = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.1, zorder=zorder_dict['Bh'])
+            self.BhC = self.ax.plot_surface(X, Y, Z, color='k', linewidth=0, alpha=0.5, zorder=1)
 
 #----------------------------------------------------------------------------
 def BBH_animation(q, chiA, chiB, save_file):
@@ -223,7 +207,7 @@ def BBH_animation(q, chiA, chiB, save_file):
     # Common time and frames
     t = np.append(t_binary[t_binary < waveform_end_time], \
         np.arange(waveform_end_time, 500 + waveform_end_time, dt_remnant))
-    frames = range(10) #range(len(t))
+    frames = range(1, 10) #range(len(t))
 
     # Reemnant properties
     mf, chif, vf, mf_err, chif_err, vf_err \
