@@ -22,3 +22,5 @@ test.mp4
 
 # virtual environment
 virtualenv
+
+*.mp4
