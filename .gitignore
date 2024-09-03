@@ -8,6 +8,7 @@ animations/*.png
 animations/*.jpg
 stills/
 tmp_*
+*/*.vtk
 
 # pypi stuff
 build
