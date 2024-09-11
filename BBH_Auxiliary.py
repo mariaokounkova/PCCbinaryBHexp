@@ -1,15 +1,6 @@
 #!/usr/bin/env python
-#### HELLO HELLO I'M ON THE BRANCH
 import numpy as np
-import os
-if os.environ.get('DISPLAY','') == '':
-   print('No display found. Using non-interactive Agg backend')
-   import matplotlib as mpl
-   mpl.use('Agg')
-import matplotlib.pyplot as plt
 import argparse
-from matplotlib.animation import FuncAnimation, FFMpegWriter
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -17,13 +8,7 @@ import surfinBH
 import NRSur7dq2
 from NRSur7dq2 import harmonics
 
-from mpl_toolkits.mplot3d import axes3d
-from mpl_toolkits.mplot3d import proj3d
-import matplotlib.animation as animation
-from matplotlib import cm
-import matplotlib.colors as colors
-from matplotlib.colors import SymLogNorm, Normalize
-from matplotlib.colors import LinearSegmentedColormap
+## Vijay's code from the binary black hole explorer paper! ##
 
 #----------------------------------------------------------------------------
 def quat_between_vecs(u, v):
