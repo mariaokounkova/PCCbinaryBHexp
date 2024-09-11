@@ -1,4 +1,4 @@
-mtplotlib
+matplotlib
 numpy<2
 scipy
 NRSur7dq2
