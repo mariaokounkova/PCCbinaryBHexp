@@ -1,7 +1,6 @@
-matplotlib
+mtplotlib
 numpy<2
 scipy
 NRSur7dq2
 surfinBH
-binaryBHexp
 pyvista
