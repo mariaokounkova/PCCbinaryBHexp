@@ -1,25 +1,4 @@
-*.pyc
 *.swp
-*.ipynb_checkpoints
-.DS_store
-animations/*.mp4
-animations/*.pdf
-animations/*.png
-animations/*.jpg
-stills/
-tmp_*
-*/*.vtk
-
-# pypi stuff
-build
-dist
-*.egg-info  
-
-make_sine_movies_script.sh
-
-# travis stuff
-.pytest_cache
-test.mp4
 
 # virtual environment
 virtualenv

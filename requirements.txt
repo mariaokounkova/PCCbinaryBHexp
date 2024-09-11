@@ -4,4 +4,4 @@ scipy
 NRSur7dq2
 surfinBH
 binaryBHexp
-pyvtk
+pyvista
