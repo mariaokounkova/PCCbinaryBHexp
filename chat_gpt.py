@@ -85,7 +85,7 @@ class AnimationWrapper:
         print("Generated data for frame %d" % frame)
 
         # Create PyVista plotter
-        plotter = pv.Plotter()
+        plotter = pv.Plotter(off_screen=True)
 
         # Generate data for each sphere
         for sphere in self.spheres:
@@ -105,8 +105,19 @@ class AnimationWrapper:
             plotter.add_mesh(mesh, scalars="GWStrain", cmap="coolwarm", opacity=0.3, \
                 show_scalar_bar=True, clim=[-0.001, 0.001])
 
-        # Show the plotter
-        plotter.show()
+        # Optional: Set up camera position, background color, etc.
+        plotter.set_background("black")  # Set background color
+
+        # Render the plotter
+        plotter.show(screenshot=True)  # This is optional; required for off-screen rendering
+
+        # Save a screenshot for the current frame
+        screenshot_file = f"{self.save_dir}/frame_{frame:03d}.png"  # File name format
+        plotter.screenshot(screenshot_file)
+        print(f"Saved screenshot: {screenshot_file}")
+
+        # Close the plotter to free resources
+        plotter.close()
 
 #----------------------------------------------------------------------------
 def BBH_animation(q, chiA, chiB, save_dir):
@@ -143,7 +154,7 @@ def BBH_animation(q, chiA, chiB, save_dir):
     anim_wrapper = AnimationWrapper(t, mA, BhA_traj, chiA_nrsur, mB, BhB_traj, chiB_nrsur, mf, BhC_traj, chif, h_nrsur, save_dir)
 
     # Frames you want to visualize (here I just put the first two frames)
-    frames = [1] #range(len(t))  # Change this to visualize the desired frames
+    frames = [1, 2, 3, 4, 5] #range(len(t))  # Change this to visualize the desired frames
 
     # Perform the animation! 
     for frame in frames:
