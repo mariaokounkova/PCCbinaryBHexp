@@ -70,12 +70,22 @@ class AnimationWrapper:
         self.shape_BhC = get_BH_shape(mf, chif)
 
         # Gravitational wave visualization
-        self.radii = [20, 25, 30]
+        self.radii = [10, 20, 25, 30]
         self.spheres = [Sphere(rad, 15, 15) for rad in self.radii]
         self.h_nrsur = h_nrsur
 
         self.save_dir = save_dir
         os.makedirs(save_dir, exist_ok=True)
+
+        # Make x, y, and z values for the fixed points
+        x_values = np.array([])
+        y_values = np.array([])
+        z_values = np.array([])
+        for sphere in self.spheres:
+            x_values = np.append(x_values, sphere.x.ravel())
+            y_values = np.append(y_values, sphere.y.ravel())
+            z_values = np.append(z_values, sphere.z.ravel())
+        self.points = np.c_[x_values, y_values, z_values]
 
     def update(self, frame):
         """ Get the animation data for the current frame """
@@ -85,32 +95,25 @@ class AnimationWrapper:
         print("Generated data for frame %d" % frame)
 
         # Plot gravitiational wave
-        x_values = np.array([])
-        y_values = np.array([])
-        z_values = np.array([])
         h_values = np.array([])
         
         for sphere in self.spheres:
             h_spherical = get_waveform_on_spherical_grid(self.t, frame - 1, \
                     self.h_nrsur, sphere)
-            x_values = np.append(x_values, sphere.x.ravel())
-            y_values = np.append(y_values, sphere.y.ravel())
-            z_values = np.append(z_values, sphere.z.ravel())
             h_values = np.append(h_values, h_spherical.ravel())
 
-        points = np.c_[x_values, y_values, z_values]
         values = h_values
 
         # TODO:
         # Here is where you take points and values and dump them in a data format appropriate
         # for your visualization software! 
 
-        # # For example: If you want to use Paraview!
-        # grid = pv.PolyData(points)
-        # grid["GWStrain"] = values
-        # filename = self.save_dir + f"/gw_strain_t{frame:03d}.vtk"
-        # grid.save(filename)
-        # print(f"Written: {filename}")
+        # For example: If you want to use Paraview!
+        grid = pv.PolyData(self.points)
+        grid["GWStrain"] = values
+        filename = self.save_dir + f"/gw_strain_t{frame:03d}.vtk"
+        grid.save(filename)
+        print(f"Written: {filename}")
 
         # # TODO: Visualizing the black hole horizonts
         # # Before merger
