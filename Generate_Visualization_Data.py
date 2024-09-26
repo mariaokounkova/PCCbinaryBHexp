@@ -98,8 +98,10 @@ class AnimationWrapper:
         h_values = np.array([])
         
         for sphere in self.spheres:
-            h_spherical = get_waveform_on_spherical_grid(self.t, frame - 1, \
-                    self.h_nrsur, sphere)
+            # h_spherical = get_waveform_on_spherical_grid(self.t, frame - 1, \
+            #         self.h_nrsur, sphere)
+            print(len(shere.))
+            h_spherical = sphere.radius*(np.ones(sphere.theta.shape))
             h_values = np.append(h_values, h_spherical.ravel())
 
         values = h_values
@@ -175,7 +177,7 @@ def BBH_animation(q, chiA, chiB, save_dir):
 
     # Frames you want to visualize (here I just put the first two frames)
     # TODO: Change to include the frames you want! Line range(len(t))
-    frames = [1, 2] #range(len(t))
+    frames = [1] #range(len(t))
 
     # Perform the animation! 
     for frame in frames:
